@@ -8,21 +8,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-base:       #0C0C0A;
-      --bg-surface:    #141412;
-      --bg-card:       #1C1C19;
-      --bg-input:      #111110;
-      --border:        #282824;
-      --border-light:  #333330;
-      --text-primary:  #E8E4D8;
-      --text-secondary:#8A8578;
-      --text-muted:    #524F48;
-      --accent:        #C4853A;
-      --accent-dim:    #8A5A25;
-      --accent-bg:     #1A1005;
-      --positive:      #4D8B6F;
-      --negative:      #B85C4A;
-      --neutral:       #7A7A6E;
+      --bg-base:        #080808;
+      --bg-surface:     #0E0E0C;
+      --bg-card:        #111110;
+      --bg-input:       #0A0A09;
+      --border:         #1E1E1A;
+      --border-light:   #2A2A26;
+      --border-bright:  #3A3A34;
+      --text-primary:   #E8E4D8;
+      --text-secondary: #8A8578;
+      --text-muted:     #424240;
+      --accent:         #C4853A;
+      --accent-dim:     #7A5020;
+      --accent-bright:  #D4954A;
+      --accent-bg:      #130D04;
+      --positive:       #3D7A5F;
+      --positive-bright:#4D9B78;
+      --negative:       #A84C3A;
+      --negative-bright:#C85C48;
+      --neutral:        #6A6A60;
+      --grid:           #141412;
+      --scan:           rgba(196, 133, 58, 0.03);
     }
 
     * { box-sizing: border-box; }
@@ -32,37 +38,68 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--bg-base);
+      background-color: var(--bg-base);
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 32px 32px;
       color: var(--text-primary);
       font-family: Inter, system-ui, sans-serif;
       font-size: 14px;
       line-height: 1.55;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto;
+      height: 2px;
+      background: var(--accent-dim);
+      z-index: 20;
+      pointer-events: none;
+    }
+
     button, select, input { font: inherit; }
+    .mono, .status-readout, .boot-sequence, .coordinate-readout, .system-id, .multiplier, .reference, .real-marker, .dimension-button, .dimension-note, .button-subline, .data-strip, .card-system, .card-footer, .habitability-class, .metric-value, .metric-delta, .timeline-time, .survivability-value { font-variant-numeric: tabular-nums; }
 
     .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 
     .app-header {
-      display: block;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
       flex: 0 0 auto;
-      padding: 24px 32px 20px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-base);
+      padding: 18px 32px 16px;
+      border-bottom: 1px solid var(--border-bright);
+      background: rgb(14 14 12 / 94%);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 40px rgb(0 0 0 / 20%);
     }
 
+    .brand-block { display: grid; gap: 4px; }
+    .title-row { display: flex; align-items: center; gap: 10px; }
+    .brand-glyph { color: var(--accent); font-size: 15px; filter: drop-shadow(0 0 8px rgb(196 133 58 / 35%)); }
     .app-title {
-      margin: 0 0 4px;
+      margin: 0;
       font-family: "Space Grotesk", sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.2em;
       color: var(--accent);
       text-transform: uppercase;
     }
 
-    .subtitle { margin: 0 0 8px; color: var(--text-muted); font-size: 11px; }
-    .tagline { margin: 0; color: var(--text-secondary); font-size: 12px; }
+    .subtitle { margin: 0 0 0 25px; color: var(--text-muted); font-size: 11px; }
+    .header-right { min-width: min(520px, 50vw); text-align: right; }
+    .status-readouts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-muted); }
+    .status-readout { white-space: nowrap; }
+    .status-readout + .status-readout::before { content: "|"; margin-right: 10px; color: var(--border-bright); }
+    .status-dot { animation: pulse-green 2s ease-in-out infinite; color: var(--positive-bright); }
+    .status-dot.simulating { animation: pulse-green 0.4s ease-in-out infinite; color: var(--accent); }
+    .boot-sequence { min-height: 16px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--accent); opacity: 1; transition: opacity 220ms ease; }
+    .boot-sequence.is-hidden { opacity: 0; }
+    .status-readouts.is-hidden { display: none; }
 
     .main-grid {
       display: grid;
@@ -74,217 +111,178 @@
     .parameters-panel {
       position: relative;
       padding: 24px;
-      border-right: 1px solid var(--border);
-      background: var(--bg-surface);
+      border-right: 1px solid var(--border-bright);
+      background: linear-gradient(180deg, rgb(14 14 12 / 97%), rgb(10 10 9 / 97%));
+      overflow: hidden;
     }
+    .parameters-panel::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 20% 0%, rgb(196 133 58 / 6%), transparent 36%); pointer-events: none; }
 
-    .results-panel { padding: 24px; background: var(--bg-base); }
+    .results-panel { padding: 24px; background: transparent; }
 
-    .section-label {
-      margin: 0 0 20px;
+    .panel-header {
+      position: relative;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title-row, .section-label-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .panel-title, .section-label {
+      position: relative;
+      margin: 0;
+      padding-left: 10px;
       font-family: "Space Grotesk", sans-serif;
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--text-primary);
     }
+    .panel-title::before, .section-label::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 2px;
+      height: 12px;
+      background: var(--accent-dim);
+      transform: translateY(-50%);
+    }
+    .panel-mode { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--accent); }
+    .panel-subtitle { margin: 6px 0 0 10px; font-size: 11px; color: var(--text-muted); }
+    .coordinate-readout { position: absolute; right: 0; bottom: -18px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); }
 
     .preset-select {
       width: 100%;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
       padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 3px;
+      border-radius: 2px;
       background: var(--bg-input);
       color: var(--text-primary);
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 150ms ease;
-    }
-
-    .preset-select:hover, .preset-select:focus { border-color: var(--border-light); }
-
-    .parameter { margin-bottom: 24px; }
-
-    .parameter-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 8px;
-    }
-
-    .parameter-name {
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .real-marker {
-      display: none;
-      align-items: center;
-      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
       font-size: 11px;
-      color: var(--positive);
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
     }
+    .preset-select:hover, .preset-select:focus { border-color: var(--border-bright); box-shadow: 0 0 0 1px rgb(196 133 58 / 8%); }
 
+    .parameter {
+      position: relative;
+      margin-bottom: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      animation: parameterBoot 420ms ease both;
+    }
+    .parameter:nth-child(1) { animation-delay: 0ms; }
+    .parameter:nth-child(2) { animation-delay: 40ms; }
+    .parameter:nth-child(3) { animation-delay: 80ms; }
+    .parameter:nth-child(4) { animation-delay: 120ms; }
+    .parameter:nth-child(5) { animation-delay: 160ms; }
+    .dimension-parameter { animation-delay: 200ms; }
+
+    .parameter-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .parameter-title { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+    .parameter-symbol { min-width: 28px; font-family: "JetBrains Mono", monospace; font-size: 16px; color: var(--accent); }
+    .parameter-name { font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-primary); text-transform: uppercase; }
+    .deviation-indicator { opacity: 0; transform: translateY(3px); color: var(--accent); font-size: 10px; transition: opacity 160ms ease, transform 160ms ease; }
+    .deviation-indicator.is-visible { opacity: 1; transform: translateY(0); }
+    .system-id { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+
+    .real-marker { display: none; align-items: center; gap: 6px; margin-top: 4px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); text-transform: lowercase; }
     .real-marker.is-visible { display: inline-flex; }
-    .real-marker::before { content: ""; width: 5px; height: 5px; border-radius: 100px; background: var(--positive); }
+    .real-marker::before { content: ""; width: 5px; height: 5px; border-radius: 100px; background: var(--positive-bright); box-shadow: 0 0 8px rgb(77 155 120 / 45%); }
 
-    input[type="range"] {
-      width: 100%;
-      height: 18px;
-      margin: 0;
-      appearance: none;
-      -webkit-appearance: none;
-      background: transparent;
-      cursor: pointer;
-      --fill: 50%;
-    }
+    .slider-shell { position: relative; padding-bottom: 12px; }
+    input[type="range"] { width: 100%; height: 20px; margin: 0; -webkit-appearance: none; appearance: none; background: transparent; outline: none; cursor: pointer; --fill: 50%; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(to right, var(--accent-dim) 0 var(--fill), var(--border-bright) var(--fill) 100%); border-radius: 0; }
+    input[type="range"]::-moz-range-track { height: 2px; border-radius: 0; background: var(--border-bright); }
+    input[type="range"]::-moz-range-progress { height: 2px; border-radius: 0; background: var(--accent-dim); }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 20px; background: var(--accent); border-radius: 2px; cursor: pointer; margin-top: -9px; border: none; box-shadow: 0 0 0 1px var(--accent-dim), 0 0 14px rgb(196 133 58 / 18%); transition: all 150ms ease; }
+    input[type="range"]::-moz-range-thumb { width: 12px; height: 20px; background: var(--accent); border-radius: 2px; cursor: pointer; border: none; box-shadow: 0 0 0 1px var(--accent-dim); transition: all 150ms ease; }
+    input[type="range"]:hover::-webkit-slider-thumb { background: var(--accent-bright); height: 24px; margin-top: -11px; }
+    input[type="range"]:hover::-moz-range-thumb { background: var(--accent-bright); height: 24px; }
+    .slider-ticks { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; justify-content: space-between; pointer-events: none; }
+    .slider-ticks span { width: 1px; height: 4px; background: var(--border-bright); }
 
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 2px;
-      border-radius: 100px;
-      background: linear-gradient(to right, var(--accent-dim) 0 var(--fill), var(--border) var(--fill) 100%);
-      transition: background 150ms ease;
-    }
-
-    input[type="range"]::-moz-range-track { height: 2px; border-radius: 100px; background: var(--border); }
-    input[type="range"]::-moz-range-progress { height: 2px; border-radius: 100px; background: var(--accent-dim); }
-
-    input[type="range"]::-webkit-slider-thumb {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      margin-top: -6px;
-      border: 0;
-      border-radius: 100px;
-      background: var(--accent);
-      transition: width 150ms ease, height 150ms ease, margin 150ms ease, background 150ms ease;
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border: 0;
-      border-radius: 100px;
-      background: var(--accent);
-      transition: width 150ms ease, height 150ms ease, background 150ms ease;
-    }
-
-    input[type="range"]:hover::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -7px; background: #D19448; }
-    input[type="range"]:hover::-moz-range-thumb { width: 16px; height: 16px; background: #D19448; }
-
-    .slider-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
-    .multiplier { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); }
-    .reference { font-size: 12px; color: var(--text-muted); text-align: right; }
+    .slider-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; align-items: flex-end; }
+    .multiplier { font-family: "JetBrains Mono", monospace; font-size: 20px; line-height: 1; color: var(--accent); text-shadow: 0 0 10px rgb(196 133 58 / 12%); }
+    .reference { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-secondary); text-align: right; }
 
     .dimension-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .dimension-button {
-      padding: 8px;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      background: var(--bg-input);
-      color: var(--text-muted);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px;
-      cursor: pointer;
-      transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
-    }
-    .dimension-button:hover { border-color: var(--border-light); }
-    .dimension-button.is-selected { background: var(--accent); color: var(--bg-base); border-color: var(--accent); }
+    .dimension-button { padding: 9px 8px; border: 1px solid var(--border-bright); border-radius: 2px; background: var(--bg-input); color: var(--text-secondary); font-family: "JetBrains Mono", monospace; font-size: 13px; cursor: pointer; transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 150ms ease; }
+    .dimension-button:hover { border-color: var(--accent-dim); transform: translateY(-1px); }
+    .dimension-button.is-selected { background: var(--accent); color: var(--bg-base); border-color: var(--accent); box-shadow: 0 0 18px rgb(196 133 58 / 18%); }
+    .dimension-note { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); }
 
-    .simulate-button {
-      position: relative;
-      width: 100%;
-      margin-top: 8px;
-      padding: 14px 16px;
-      border: 1px solid var(--accent-dim);
-      border-radius: 4px;
-      background: var(--accent-bg);
-      color: var(--accent);
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      transition: background 150ms ease, color 150ms ease;
-    }
-    .simulate-button:hover { background: var(--accent-dim); color: var(--bg-base); }
-    .simulate-button:disabled { pointer-events: none; opacity: 0.85; }
+    .simulate-button { position: relative; display: grid; gap: 4px; align-content: center; width: 100%; height: 64px; margin-top: 8px; padding: 12px 16px 12px 20px; border: 1px solid var(--accent-dim); border-top: 2px solid var(--accent); border-radius: 2px; background: var(--accent-bg); color: var(--accent); text-align: left; cursor: pointer; overflow: hidden; transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease; }
+    .simulate-button::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+    .simulate-button:hover { background: rgb(122 80 32 / 30%); border-top-color: var(--accent-bright); transform: translateY(-1px); }
+    .simulate-button:disabled { pointer-events: none; opacity: 0.9; }
+    .simulate-button.is-flashing { animation: buttonFlash 150ms ease; }
+    .button-main { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; color: var(--accent); }
+    .button-subline { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--accent-dim); }
     .cursor { display: none; animation: blink 800ms steps(2, start) infinite; }
     .is-loading .cursor { display: inline; }
 
-    .loading-bar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1px;
-      overflow: hidden;
-      opacity: 0;
-    }
-    .loading-bar::before { content: ""; position: absolute; width: 35%; height: 1px; background: var(--accent); animation: indeterminate 900ms ease-in-out infinite; }
-    .parameters-panel.is-loading .loading-bar { opacity: 1; }
+    .loading-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; overflow: hidden; opacity: 0; }
+    .loading-bar::before { content: ""; position: absolute; width: 35%; height: 100%; background: var(--accent); animation: indeterminate 900ms ease-in-out infinite; box-shadow: 0 0 12px var(--accent); }
+    .parameters-panel.is-loading .loading-bar { height: 2px; opacity: 1; animation: pulse-green 700ms ease-in-out infinite; }
 
     .results-stack { display: flex; flex-direction: column; gap: 20px; }
     .cards-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    .data-strip { display: none; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding: 9px 10px; border: 1px solid var(--border); background: rgb(17 17 16 / 86%); font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+    .data-strip.is-visible { display: flex; }
+    .delta-nominal { color: var(--positive-bright); }
+    .delta-significant { color: var(--accent); }
+    .delta-critical { color: var(--negative-bright); }
 
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg-card);
-      padding: 20px;
-      transition: border-color 150ms ease;
-    }
-    .card:hover { border-color: var(--border-light); }
+    .card { position: relative; overflow: visible; border: 1px solid var(--border); border-radius: 2px; background-color: var(--bg-card); background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(196, 133, 58, 0.015) 2px, rgba(196, 133, 58, 0.015) 4px); padding: 20px; transition: border-color 150ms ease, transform 150ms ease; }
+    .card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 1px solid var(--accent-dim); border-left: 1px solid var(--accent-dim); pointer-events: none; }
+    .card::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-bottom: 1px solid var(--accent-dim); border-right: 1px solid var(--accent-dim); pointer-events: none; }
+    .card:hover { border-color: var(--border-bright); transform: translateY(-1px); }
     .card.is-animated { opacity: 0; transform: translateY(8px); animation: cardIn 420ms ease forwards; }
+    .card.is-animated .data-sweep { position: absolute; inset: 0 auto 0 0; width: 1px; background: linear-gradient(180deg, transparent, var(--accent-bright), transparent); opacity: 0; animation: dataSweep 760ms ease-out forwards; animation-delay: inherit; pointer-events: none; }
     .results-panel.is-loading .card { animation: borderPulse 1s ease-in-out infinite; }
 
-    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
     .card-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .icon { color: var(--accent-dim); font-size: 18px; line-height: 1; }
-    .card-title { font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .icon { color: var(--accent); font-size: 18px; line-height: 1; }
+    .card-title { font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.05em; color: var(--text-primary); text-transform: uppercase; }
+    .card-system { display: flex; align-items: center; gap: 10px; margin: 0 0 14px 28px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); }
+    .card-system::after { content: ""; height: 1px; flex: 1; background: var(--border); }
     .rule { height: 1px; background: var(--border); margin-bottom: 14px; }
     .card-content { color: var(--text-secondary); font-size: 14px; }
     .card-content p { margin: 0 0 12px; }
     .card-content p:last-child { margin-bottom: 0; }
+    .card-footer { margin: 16px -20px -20px; padding: 10px 20px; border-top: 1px solid var(--border); font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
 
-    .severity, .badge {
-      flex: 0 0 auto;
-      border-radius: 100px;
-      padding: 4px 8px;
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    .severity.normal, .severity.possible { background: rgb(77 139 111 / 15%); color: var(--positive); }
-    .severity.altered, .severity.unlikely { background: rgb(196 133 58 / 15%); color: var(--accent); }
-    .severity.extreme { background: rgb(184 92 74 / 20%); color: var(--negative); }
-    .severity.impossible { background: rgb(184 92 74 / 25%); color: var(--negative); }
+    .severity, .badge { flex: 0 0 auto; border: 1px solid currentColor; border-radius: 2px; padding: 4px 8px; font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; }
+    .severity.normal, .severity.possible { background: rgb(77 155 120 / 10%); color: var(--positive-bright); }
+    .severity.altered, .severity.unlikely { background: rgb(196 133 58 / 12%); color: var(--accent); }
+    .severity.extreme { background: rgb(200 92 72 / 14%); color: var(--negative-bright); }
+    .severity.impossible { background: rgb(200 92 72 / 18%); color: var(--negative-bright); }
 
-    .empty-panel { min-height: 560px; display: grid; place-items: center; }
-    .empty-message { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 15px; color: var(--text-muted); white-space: pre-line; }
-    .empty-symbol { display: block; margin-bottom: 20px; font-size: 40px; color: var(--border-light); }
+    .empty-panel { position: relative; min-height: 560px; display: grid; place-items: center; overflow: hidden; }
+    .empty-panel::before { content: "α = e² / (4πε₀ħc)"; position: absolute; inset: 0; display: grid; place-items: center; font-family: "JetBrains Mono", monospace; font-size: clamp(28px, 5vw, 48px); color: var(--border); opacity: 0.42; pointer-events: none; }
+    .empty-message { position: relative; z-index: 1; text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 15px; color: var(--text-muted); white-space: pre-line; }
+    .empty-symbol { display: block; margin-bottom: 20px; font-size: 40px; color: var(--border-light); animation: slowSpin 12s linear infinite; }
     .empty-card-area { display: grid; place-items: center; min-height: 132px; border: 1px dashed var(--border); color: var(--text-muted); font-size: 13px; text-align: center; }
 
-    .verdict-name { margin: 16px 0; padding-left: 12px; border-left: 3px solid var(--accent); font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 600; color: var(--text-primary); }
+    .verdict-head, .metrics-head, .timeline-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .verdict-classification, .metrics-subtitle, .timeline-age { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+    .verdict-classification strong { color: var(--accent); font-weight: 400; }
+    .verdict-name { margin: 16px 0; padding-left: 12px; border-left: 5px solid var(--accent); font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 600; color: var(--text-primary); }
     .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .badge.positive { background: rgb(77 139 111 / 15%); color: var(--positive); }
-    .badge.negative { background: rgb(184 92 74 / 20%); color: var(--negative); }
-    .badge.neutral { background: rgb(196 133 58 / 15%); color: var(--accent); }
-
-    .survivability-label { margin: 20px 0 8px; font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; color: var(--text-muted); }
+    .badge.positive { background: rgb(77 155 120 / 10%); color: var(--positive-bright); }
+    .badge.negative { background: rgb(200 92 72 / 14%); color: var(--negative-bright); }
+    .badge.neutral { background: rgb(196 133 58 / 12%); color: var(--accent); }
+    .survivability-label { display: flex; justify-content: space-between; margin: 20px 0 8px; font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; }
     .survivability-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-    .survivability-track { height: 8px; background: var(--border); overflow: hidden; }
+    .survivability-track { height: 10px; background: var(--border); overflow: hidden; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 30%); }
     .survivability-fill { height: 100%; width: 0; background: var(--accent); animation: growBar 800ms cubic-bezier(.22, 1, .36, 1) forwards; }
     .survivability-value { font-family: "JetBrains Mono", monospace; color: var(--accent); font-size: 13px; }
+    .habitability-class { margin-top: 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+    .habitability-class strong { color: var(--accent); font-weight: 400; }
 
     .metrics-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: center; }
     .radar-wrap { display: grid; place-items: center; }
@@ -294,67 +292,90 @@
     .metric-label { font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
     .metric-value { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); }
     .metric-delta { font-family: "JetBrains Mono", monospace; font-size: 10px; }
-    .metric-delta.negative { color: var(--negative); }
-    .metric-delta.positive { color: var(--positive); }
+    .metric-delta.negative { color: var(--negative-bright); }
+    .metric-delta.positive { color: var(--positive-bright); }
     .metric-track { height: 4px; background: var(--border); }
     .metric-fill { height: 100%; width: 0; background: var(--accent-dim); animation: growBar 700ms cubic-bezier(.22, 1, .36, 1) forwards; }
 
-    .timeline-list { display: flex; flex-direction: column; }
-    .timeline-item { display: grid; grid-template-columns: 20px 160px 1fr; gap: 12px; opacity: 0; animation: timelineIn 280ms ease forwards; }
-    .timeline-marker { position: relative; display: flex; justify-content: center; }
-    .timeline-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 100px; background: var(--accent); }
-    .timeline-marker::after { content: ""; position: absolute; top: 18px; bottom: 0; width: 1px; background: var(--border); }
-    .timeline-item:last-child .timeline-marker::after { display: none; }
+    .timeline-list { position: relative; display: flex; flex-direction: column; }
+    .timeline-list::before { content: ""; position: absolute; left: 198px; top: 18px; bottom: 18px; width: 1px; background: var(--border); }
+    .timeline-item { display: grid; grid-template-columns: 110px 72px 1fr; gap: 12px; opacity: 0; animation: timelineIn 280ms ease forwards; }
+    .timeline-marker { position: relative; display: flex; justify-content: flex-end; color: var(--accent); font-family: "JetBrains Mono", monospace; font-size: 12px; line-height: 1.55; z-index: 1; }
+    .timeline-dot { display: none; }
     .timeline-time { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); text-align: right; }
     .timeline-event { padding-bottom: 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; }
     .timeline-item:last-child .timeline-event { border-bottom: 0; padding-bottom: 0; }
 
-    .error-card { border-color: rgb(184 92 74 / 30%); background: rgb(184 92 74 / 10%); }
+    .error-card { border-color: rgb(200 92 72 / 35%); background-color: rgb(168 76 58 / 10%); }
 
     @keyframes blink { 50% { opacity: 0; } }
+    @keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     @keyframes indeterminate { 0% { transform: translateX(-110%); } 100% { transform: translateX(320%); } }
     @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+    @keyframes dataSweep { 0% { opacity: 0; transform: translateX(0); } 15% { opacity: 0.7; } 100% { opacity: 0; transform: translateX(calc(100vw - 430px)); } }
     @keyframes growBar { to { width: var(--target); } }
     @keyframes timelineIn { to { opacity: 1; } }
-    @keyframes borderPulse { 50% { border-color: var(--border-light); } }
+    @keyframes borderPulse { 50% { border-color: var(--border-bright); } }
+    @keyframes parameterBoot { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes buttonFlash { 50% { background: rgb(196 133 58 / 28%); box-shadow: 0 0 26px rgb(196 133 58 / 28%); } }
+    @keyframes slowSpin { to { transform: rotate(360deg); } }
 
     @media (max-width: 899px) {
-      .app-header { padding: 20px; }
+      .app-header { padding: 20px; align-items: flex-start; flex-direction: column; }
+      .header-right { min-width: 0; width: 100%; text-align: left; }
+      .status-readouts { justify-content: flex-start; }
       .main-grid { grid-template-columns: 1fr; }
       .parameters-panel { border-right: 0; border-bottom: 1px solid var(--border); }
       .results-panel { padding: 20px; }
       .cards-grid, .metrics-layout { grid-template-columns: 1fr; }
-      .timeline-item { grid-template-columns: 20px 96px 1fr; }
+      .timeline-list::before { left: 134px; }
+      .timeline-item { grid-template-columns: 76px 46px 1fr; }
       .timeline-time { width: auto; }
+      .data-strip { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
-      <h1 class="app-title">Theory Machine</h1>
-      <p class="subtitle">by Hack Club · Stardance 2025</p>
-      <p class="tagline">Explore alternate universes by modifying the laws of physics.</p>
+      <div class="brand-block">
+        <div class="title-row"><span class="brand-glyph">◈</span><h1 class="app-title">Theory Machine</h1></div>
+        <p class="subtitle">by Hack Club · Stardance 2025</p>
+      </div>
+      <div class="header-right" aria-live="polite">
+        <div class="boot-sequence" id="bootSequence">INITIALIZING PHYSICS ENGINE...</div>
+        <div class="status-readouts is-hidden" id="statusReadouts">
+          <span class="status-readout">SIM-ENGINE v2.1</span>
+          <span class="status-readout">CONSTANTS: VARIABLE</span>
+          <span class="status-readout" id="statusReadout">STATUS: READY <span class="status-dot" id="statusDot">●</span></span>
+        </div>
+      </div>
     </header>
 
     <main class="main-grid">
       <aside class="parameters-panel" id="parametersPanel">
-        <p class="section-label">Universe Parameters</p>
+        <div class="panel-header">
+          <div class="panel-title-row"><p class="panel-title">Universe Parameters</p><span class="panel-mode" id="panelMode">[3D]</span></div>
+          <p class="panel-subtitle">Configure fundamental constants</p>
+          <span class="coordinate-readout">LAT: 51.5074° N</span>
+        </div>
         <select class="preset-select" id="presetSelect" aria-label="Preset universe"></select>
         <div id="parameterControls"></div>
-        <div class="parameter">
+        <div class="parameter dimension-parameter">
           <div class="parameter-header">
-            <span class="parameter-name">Spatial Dimensions</span>
-            <span class="real-marker is-visible" id="dimsReal">real universe</span>
+            <span class="parameter-title"><span class="parameter-symbol">DIM</span><span class="parameter-name">Spatial Dimensions</span></span>
+            <span class="system-id">SYS-06</span>
           </div>
           <div class="dimension-group" id="dimensionGroup" aria-label="Spatial dimensions"></div>
+          <div class="dimension-note" id="dimensionNote">NOTE: Stable orbital mechanics</div>
+          <span class="real-marker is-visible" id="dimsReal">real universe</span>
         </div>
-        <button class="simulate-button" id="simulateButton">SIMULATE UNIVERSE →<span class="cursor">|</span></button>
+        <button class="simulate-button" id="simulateButton"><span class="button-main">▶ SIMULATE UNIVERSE<span class="cursor">_</span></span><span class="button-subline">INITIALIZE PHYSICS ENGINE →</span></button>
         <div class="loading-bar" aria-hidden="true"></div>
       </aside>
 
       <section class="results-panel" id="resultsPanel">
-        <p class="section-label">Consequences</p>
+        <div class="data-strip" id="dataStrip"></div>
         <div id="resultsRoot" class="empty-panel">
           <div class="empty-message"><span class="empty-symbol">⬡</span>Configure the universe parameters
 on the left and press Simulate.
@@ -380,14 +401,22 @@ chemistry, and life would look like.</div>
     ];
 
     const PARAMS = [
-      { key: "c", name: "Speed of Light", min: 0.01, max: 10, step: 0.01, display: v => `c = ${(v * 2.998).toFixed(3)} × 10⁸ m/s` },
-      { key: "G", name: "Gravitational Constant", min: 0.01, max: 100, step: 0.1, display: v => `G × ${formatMultiplier(v)}` },
-      { key: "hbar", name: "Planck's Constant", min: 0.01, max: 100, step: 0.1, display: v => `ħ × ${formatMultiplier(v)}` },
-      { key: "e", name: "Electron Charge", min: 0.1, max: 5, step: 0.05, display: v => `e × ${formatMultiplier(v)}` },
-      { key: "snf", name: "Strong Nuclear Force", min: 0.1, max: 10, step: 0.05, display: v => `αs × ${formatMultiplier(v)}` }
+      { key: "c", symbol: "c", system: "SYS-01", name: "Speed of Light", min: 0.01, max: 10, step: 0.01, display: v => `${(v * 2.998).toFixed(3)}×10⁸ m/s` },
+      { key: "G", symbol: "G", system: "SYS-02", name: "Gravitational Constant", min: 0.01, max: 100, step: 0.1, display: v => `G × ${formatMultiplier(v)}` },
+      { key: "hbar", symbol: "ħ", system: "SYS-03", name: "Planck's Constant", min: 0.01, max: 100, step: 0.1, display: v => `ħ × ${formatMultiplier(v)}` },
+      { key: "e", symbol: "e", system: "SYS-04", name: "Electron Charge", min: 0.1, max: 5, step: 0.05, display: v => `e × ${formatMultiplier(v)}` },
+      { key: "snf", symbol: "αs", system: "SYS-05", name: "Strong Nuclear Force", min: 0.1, max: 10, step: 0.05, display: v => `αs × ${formatMultiplier(v)}` }
     ];
 
     const state = { c: 1, G: 1, hbar: 1, e: 1, snf: 1, dims: 3 };
+    const dimensionNotes = {
+      2: "NOTE: Quantum mechanics breaks down",
+      3: "NOTE: Stable orbital mechanics",
+      4: "NOTE: Inverse-cube gravity, unstable orbits",
+      5: "NOTE: All structure collapses instantly"
+    };
+    let simulationCount = 0;
+    let lastComputeSeconds = "0.0";
     const controls = new Map();
     const $ = selector => document.querySelector(selector);
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -408,8 +437,45 @@ chemistry, and life would look like.</div>
       renderParameterControls();
       renderDimensionControls();
       applyValues(PRESETS[0].values, false);
+      runBootSequence();
       $("#simulateButton").addEventListener("click", runSimulation);
       window.addEventListener("resize", () => window.latestResult && drawRadar(window.latestResult.metrics, 1));
+    }
+
+
+    function runBootSequence() {
+      const boot = $("#bootSequence");
+      const readouts = $("#statusReadouts");
+      const lines = ["INITIALIZING PHYSICS ENGINE...", "LOADING FUNDAMENTAL CONSTANTS...", "READY."];
+      lines.forEach((line, index) => setTimeout(() => { boot.textContent = line; }, index * 250));
+      setTimeout(() => {
+        boot.classList.add("is-hidden");
+        readouts.classList.remove("is-hidden");
+      }, 850);
+    }
+
+    function setSimulationStatus(isSimulating) {
+      const dot = $("#statusDot");
+      const readout = $("#statusReadout");
+      dot.classList.toggle("simulating", isSimulating);
+      readout.firstChild.nodeValue = isSimulating ? "STATUS: RUNNING " : "STATUS: READY ";
+    }
+
+    function animateCounters(root = document) {
+      root.querySelectorAll("[data-count-to]").forEach(node => {
+        const target = Number(node.dataset.countTo);
+        const suffix = node.dataset.countSuffix || "";
+        const prefix = node.dataset.countPrefix || "";
+        const decimals = Number(node.dataset.countDecimals || 0);
+        const start = performance.now();
+        const step = now => {
+          const progress = clamp((now - start) / 600, 0, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          node.textContent = `${prefix}${(target * eased).toFixed(decimals)}${suffix}`;
+          if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
     }
 
     function renderParameterControls() {
@@ -419,14 +485,18 @@ chemistry, and life would look like.</div>
         wrapper.className = "parameter";
         wrapper.innerHTML = `
           <div class="parameter-header">
-            <label class="parameter-name" for="${config.key}">${config.name}</label>
-            <span class="real-marker" data-real="${config.key}">real universe</span>
+            <label class="parameter-title" for="${config.key}"><span class="parameter-symbol">${config.symbol}</span><span class="parameter-name">${config.name}</span><span class="deviation-indicator" data-deviation="${config.key}">▲</span></label>
+            <span class="system-id">── ${config.system}</span>
           </div>
-          <input id="${config.key}" type="range" min="${config.min}" max="${config.max}" step="${config.step}" value="1" aria-label="${config.name}">
+          <div class="slider-shell">
+            <input id="${config.key}" type="range" min="${config.min}" max="${config.max}" step="${config.step}" value="1" aria-label="${config.name}">
+            <div class="slider-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+          </div>
           <div class="slider-meta">
-            <span class="multiplier" data-multiplier="${config.key}">×1.0</span>
+            <span class="multiplier" data-multiplier="${config.key}">×1.00</span>
             <span class="reference" data-reference="${config.key}"></span>
-          </div>`;
+          </div>
+          <span class="real-marker" data-real="${config.key}">real universe</span>`;
         root.appendChild(wrapper);
         const input = wrapper.querySelector("input");
         input.addEventListener("input", () => {
@@ -469,9 +539,14 @@ chemistry, and life would look like.</div>
         document.querySelector(`[data-multiplier="${config.key}"]`).textContent = `×${formatMultiplier(state[config.key])}`;
         document.querySelector(`[data-reference="${config.key}"]`).textContent = config.display(state[config.key]);
         document.querySelector(`[data-real="${config.key}"]`).classList.toggle("is-visible", Math.abs(state[config.key] - 1) < 0.0001);
+        const deviation = document.querySelector(`[data-deviation="${config.key}"]`);
+        deviation.textContent = state[config.key] > 1 ? "▲" : "▼";
+        deviation.classList.toggle("is-visible", Math.abs(state[config.key] - 1) >= 0.0001);
       });
       [...document.querySelectorAll(".dimension-button")].forEach(button => button.classList.toggle("is-selected", button.textContent === `${state.dims}D`));
       $("#dimsReal").classList.toggle("is-visible", state.dims === 3);
+      $("#dimensionNote").textContent = dimensionNotes[state.dims];
+      $("#panelMode").textContent = `[${state.dims}D]`;
     }
 
     function simulateUniverse(params) {
@@ -641,14 +716,24 @@ chemistry, and life would look like.</div>
       const button = $("#simulateButton");
       const panel = $("#parametersPanel");
       const resultsPanel = $("#resultsPanel");
+      const mainLine = button.querySelector(".button-main");
+      const subLine = button.querySelector(".button-subline");
       try {
         button.disabled = true;
+        button.classList.add("is-flashing");
+        setTimeout(() => button.classList.remove("is-flashing"), 160);
+        await new Promise(resolve => setTimeout(resolve, 150));
         button.classList.add("is-loading");
-        button.firstChild.nodeValue = "SIMULATING...";
+        mainLine.innerHTML = `■ SIMULATING<span class="cursor">_</span>`;
+        subLine.textContent = "COMPUTING PHYSICAL CONSTANTS...";
+        setSimulationStatus(true);
         panel.classList.add("is-loading");
         resultsPanel.classList.add("is-loading");
+        const start = performance.now();
         await new Promise(resolve => setTimeout(resolve, 1200));
         const result = simulateUniverse({ ...state });
+        lastComputeSeconds = ((performance.now() - start) / 1000).toFixed(1);
+        simulationCount += 1;
         window.latestResult = result;
         renderResults(result);
       } catch (error) {
@@ -656,7 +741,9 @@ chemistry, and life would look like.</div>
       } finally {
         button.disabled = false;
         button.classList.remove("is-loading");
-        button.firstChild.nodeValue = "SIMULATE UNIVERSE →";
+        mainLine.innerHTML = `▶ SIMULATE UNIVERSE<span class="cursor">_</span>`;
+        subLine.textContent = "INITIALIZE PHYSICS ENGINE →";
+        setSimulationStatus(false);
         panel.classList.remove("is-loading");
         resultsPanel.classList.remove("is-loading");
       }
@@ -664,40 +751,87 @@ chemistry, and life would look like.</div>
 
     function renderResults(result) {
       const cards = [
-        ["⚛", result.atomic_structure],
-        ["✦", result.stellar_physics],
-        ["⬡", result.chemistry],
-        ["◈", result.life_possibility]
+        ["⚛", result.atomic_structure, "atomic_stability", "STABILITY INDEX", "FROM NORM"],
+        ["✦", result.stellar_physics, "planet_stability", "STELLAR LIFETIME INDEX", ""],
+        ["⬡", result.chemistry, "chemistry_complexity", "COMPLEXITY INDEX", ""],
+        ["◈", result.life_possibility, "life_potential", "LIFE INDEX", ""]
       ];
+      renderDataStrip(result.verdict.survivability);
       $("#resultsRoot").className = "results-stack";
       $("#resultsRoot").innerHTML = `
-        <div class="cards-grid">${cards.map(([icon, card], index) => renderCard(icon, card, index)).join("")}</div>
+        <div class="cards-grid">${cards.map(([icon, card, key, label, suffix], index) => renderCard(icon, card, index, result.metrics[key], label, suffix)).join("")}</div>
         ${renderVerdict(result.verdict)}
         ${renderMetrics(result.metrics)}
         ${renderTimeline(result.timeline)}
       `;
+      animateCounters($("#resultsRoot"));
       requestAnimationFrame(() => drawRadar(result.metrics, 0));
     }
 
-    function renderCard(icon, card, index) {
-      return `<article class="card is-animated" style="animation-delay:${index * 120}ms">
-        <div class="card-header"><div class="card-heading"><span class="icon">${icon}</span><span class="card-title">${card.title}</span></div><span class="severity ${card.severity}">${labelForSeverity(card.severity)}</span></div>
-        <div class="rule"></div><div class="card-content">${paragraphs(card.content)}</div>
+    function renderCard(icon, card, index, metricValue, metricLabel, footerSuffix) {
+      const delta = metricValue - 100;
+      const deviation = `${delta > 0 ? "+" : "−"}${Math.abs(delta)}`;
+      return `<article class="card is-animated" style="animation-delay:${index * 120}ms"><span class="data-sweep"></span>
+        <div class="card-header"><div class="card-heading"><span class="icon">${icon}</span><span class="card-title">${card.title}</span></div><span class="severity ${card.severity}">[${labelForSeverity(card.severity)}]</span></div>
+        <div class="card-system">SYS-READ-${String(index + 1).padStart(2, "0")}</div><div class="card-content">${paragraphs(card.content)}</div>
+        <div class="card-footer">${metricLabel}: <span data-count-to="${metricValue}">0</span>    DEVIATION: ${deviation}${footerSuffix ? ` ${footerSuffix}` : ""}</div>
       </article>`;
     }
 
     function renderVerdict(verdict) {
       const color = verdict.survivability <= 20 ? "var(--negative)" : verdict.survivability <= 60 ? "var(--accent)" : "var(--positive)";
-      return `<article class="card is-animated" style="animation-delay:480ms"><p class="section-label">Universe Verdict</p><div class="verdict-name">&quot;${verdict.universe_name}&quot;</div><div class="badges">${verdict.badges.map(b => `<span class="badge ${badgeClass(b)}">${b}</span>`).join("")}</div><div class="card-content"><p>${verdict.description}</p></div><div class="survivability-label">Survivability</div><div class="survivability-row"><div class="survivability-track"><div class="survivability-fill" style="--target:${verdict.survivability}%; background:${color}"></div></div><span class="survivability-value">${verdict.survivability}%</span></div></article>`;
+      const classification = classificationFor(verdict.survivability);
+      const habitability = habitabilityClass(verdict.survivability);
+      return `<article class="card is-animated" style="animation-delay:480ms"><span class="data-sweep"></span><div class="verdict-head"><p class="section-label">Universe Verdict</p><span class="verdict-classification">CLASSIFICATION: <strong>${classification}</strong></span></div><div class="verdict-name">&quot;${verdict.universe_name}&quot;</div><div class="badges">${verdict.badges.map(b => `<span class="badge ${badgeClass(b)}">${b}</span>`).join("")}</div><div class="card-content"><p>${verdict.description}</p></div><div class="survivability-label"><span>Survivability Rating</span><span><span data-count-to="${verdict.survivability}">0</span> / 100</span></div><div class="survivability-row"><div class="survivability-track"><div class="survivability-fill" style="--target:${verdict.survivability}%; background:${color}"></div></div><span class="survivability-value"><span data-count-to="${verdict.survivability}">0</span>%</span></div><div class="habitability-class">HABITABILITY CLASS: <strong>${habitability.code}</strong> ${habitability.label}</div></article>`;
     }
 
     function renderMetrics(metrics) {
       const items = metricItems(metrics);
-      return `<article class="card is-animated" style="animation-delay:600ms"><p class="section-label">Universe Metrics</p><div class="metrics-layout"><div class="radar-wrap"><canvas id="radarCanvas" width="280" height="280" aria-label="Universe metrics radar chart"></canvas></div><div class="metric-list">${items.map(item => { const delta = item.value - 100; return `<div class="metric"><div class="metric-top"><span class="metric-label">${item.label}</span><span class="metric-value">${item.value}</span>${delta === 0 ? "" : `<span class="metric-delta ${delta > 0 ? "positive" : "negative"}">${delta > 0 ? "+" : "−"}${Math.abs(delta)}</span>`}</div><div class="metric-track"><div class="metric-fill" style="--target:${item.value}%"></div></div></div>`; }).join("")}</div></div></article>`;
+      return `<article class="card is-animated" style="animation-delay:600ms"><span class="data-sweep"></span><div class="metrics-head"><p class="section-label">Universe Metrics</p><span class="metrics-subtitle">Pentagonal Analysis Grid</span></div><div class="metrics-layout"><div class="radar-wrap"><canvas id="radarCanvas" width="280" height="280" aria-label="Universe metrics radar chart"></canvas></div><div class="metric-list">${items.map(item => { const delta = item.value - 100; return `<div class="metric"><div class="metric-top"><span class="metric-label">${item.label}</span><span class="metric-value" data-count-to="${item.value}">0</span>${delta === 0 ? "" : `<span class="metric-delta ${delta > 0 ? "positive" : "negative"}">${delta > 0 ? "+" : "−"}${Math.abs(delta)}</span>`}</div><div class="metric-track"><div class="metric-fill" style="--target:${item.value}%"></div></div></div>`; }).join("")}</div></div></article>`;
     }
 
     function renderTimeline(timeline) {
-      return `<article class="card is-animated" style="animation-delay:720ms"><p class="section-label">Cosmic Timeline</p><div class="timeline-list">${timeline.map((item, index) => `<div class="timeline-item" style="animation-delay:${980 + index * 80}ms"><div class="timeline-marker"><span class="timeline-dot"></span></div><div class="timeline-time">${item.time}</div><div class="timeline-event">${item.event}</div></div>`).join("")}</div></article>`;
+      return `<article class="card is-animated" style="animation-delay:720ms"><span class="data-sweep"></span><div class="timeline-head"><p class="section-label">Cosmic Timeline</p><span class="timeline-age">UNIVERSE AGE: ${estimateUniverseAge(timeline)} BYR EST</span></div><div class="timeline-list">${timeline.map((item, index) => `<div class="timeline-item" style="animation-delay:${980 + index * 80}ms"><div class="timeline-time">T+${compactTime(item.time)}</div><div class="timeline-marker">════●</div><div class="timeline-event">${item.event}</div></div>`).join("")}</div></article>`;
+    }
+
+    function renderDataStrip(survivability) {
+      const delta = survivability > 70 ? ["NOMINAL", "delta-nominal"] : survivability >= 30 ? ["SIGNIFICANT", "delta-significant"] : ["CRITICAL", "delta-critical"];
+      const strip = $("#dataStrip");
+      strip.classList.add("is-visible");
+      strip.innerHTML = `<span>CONSEQUENCES</span><span>SIM #${String(simulationCount).padStart(4, "0")}</span><span>COMPUTED IN ${lastComputeSeconds}s</span><span>Δ FROM BASELINE: <strong class="${delta[1]}">${delta[0]}</strong></span>`;
+    }
+
+    function habitabilityClass(score) {
+      if (score <= 10) return { code: "CLASS-Ω", label: "VOID UNIVERSE" };
+      if (score <= 20) return { code: "CLASS-VI", label: "STRUCTURELESS" };
+      if (score <= 30) return { code: "CLASS-V", label: "PARTICLE SOUP" };
+      if (score <= 40) return { code: "CLASS-IV", label: "STERILE" };
+      if (score <= 50) return { code: "CLASS-III", label: "MARGINALLY STRUCTURED" };
+      if (score <= 60) return { code: "CLASS-II", label: "EXOTIC LIFE POSSIBLE" };
+      if (score <= 70) return { code: "CLASS-I", label: "LIFE-BEARING" };
+      if (score <= 85) return { code: "CLASS-0", label: "HOSPITABLE" };
+      return { code: "CLASS-∞", label: "NEAR-IDENTICAL TO OURS" };
+    }
+
+    function classificationFor(score) {
+      if (score <= 20) return "VOID";
+      if (score <= 45) return "STERILE";
+      if (score <= 70) return "EXOTIC";
+      if (score <= 90) return "HOSPITABLE";
+      return "OPTIMAL";
+    }
+
+    function compactTime(time) {
+      return time.replace(" seconds", "s").replace(" minutes", "min").replace(" million years", "Myr").replace(" billion years", "Byr").replace(" years", "yr");
+    }
+
+    function estimateUniverseAge(timeline) {
+      const joined = timeline.map(item => item.time).join(" ");
+      const billionMatches = [...joined.matchAll(/([0-9]+(?:\.[0-9]+)?)(?:–[0-9]+)? billion years/g)].map(match => Number(match[1]));
+      if (billionMatches.length) return Math.max(...billionMatches).toFixed(1);
+      const millionMatches = [...joined.matchAll(/([0-9,]+) million years/g)].map(match => Number(match[1].replace(/,/g, "")) / 1000);
+      if (millionMatches.length) return Math.max(...millionMatches).toFixed(2);
+      return "0.0";
     }
 
     function renderError(error) {
@@ -742,10 +876,20 @@ chemistry, and life would look like.</div>
         ctx.clearRect(0, 0, 280, 280);
         ctx.lineWidth = 0.5;
         for (let ring = 1; ring <= 3; ring++) drawPolygon(ctx, Array(5).fill(ring / 3), radius, center, styles.getPropertyValue("--border"), false);
+        ctx.save();
+        ctx.setLineDash([2, 4]);
+        drawPolygon(ctx, Array(5).fill(1), radius, center, styles.getPropertyValue("--border-bright"), false);
+        ctx.restore();
         ctx.strokeStyle = styles.getPropertyValue("--border-light");
         for (let i = 0; i < 5; i++) {
           const point = radarPoint(i, 1, radius, center);
           ctx.beginPath(); ctx.moveTo(center, center); ctx.lineTo(point.x, point.y); ctx.stroke();
+          [0.25, 0.5, 0.75].forEach(tick => {
+            const dot = radarPoint(i, tick, radius, center);
+            ctx.beginPath(); ctx.arc(dot.x, dot.y, 1.6, 0, Math.PI * 2);
+            ctx.fillStyle = styles.getPropertyValue("--border-bright");
+            ctx.fill();
+          });
           const labelPoint = radarPoint(i, 1.22, radius, center);
           ctx.fillStyle = styles.getPropertyValue("--text-muted");
           ctx.font = "11px JetBrains Mono";
@@ -764,7 +908,7 @@ chemistry, and life would look like.</div>
       ctx.closePath();
       if (filled) { ctx.fillStyle = "rgb(196 133 58 / 20%)"; ctx.fill(); ctx.lineWidth = 1.5; }
       ctx.strokeStyle = color; ctx.stroke();
-      if (filled) values.forEach((value, index) => { const p = radarPoint(index, value, radius, center); ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
+      if (filled) values.forEach((value, index) => { const p = radarPoint(index, value, radius, center); ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "rgb(212 149 74 / 80%)"; ctx.stroke(); });
     }
 
     function radarPoint(index, value, radius, center) {
