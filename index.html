@@ -44,6 +44,8 @@
     .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 
     .app-header {
+      display: block;
+      flex: 0 0 auto;
       padding: 24px 32px 20px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-base);
@@ -230,7 +232,7 @@
     .parameters-panel.is-loading .loading-bar { opacity: 1; }
 
     .results-stack { display: flex; flex-direction: column; gap: 20px; }
-    .cards-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .cards-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 
     .card {
       border: 1px solid var(--border);
@@ -392,7 +394,7 @@ chemistry, and life would look like.</div>
     const roundScore = value => Math.round(clamp(value, 0, 100));
 
     function formatMultiplier(value) {
-      return Number(value).toFixed(value >= 10 ? 1 : 2).replace(/\.00$/, ".0");
+      return Number(value).toFixed(value >= 10 ? 1 : 2);
     }
 
     function init() {
@@ -402,9 +404,10 @@ chemistry, and life would look like.</div>
         const preset = PRESETS[Number(presetSelect.value)];
         if (preset.values) applyValues(preset.values, false);
       });
+      presetSelect.value = "0";
       renderParameterControls();
       renderDimensionControls();
-      updateControls();
+      applyValues(PRESETS[0].values, false);
       $("#simulateButton").addEventListener("click", runSimulation);
       window.addEventListener("resize", () => window.latestResult && drawRadar(window.latestResult.metrics, 1));
     }
@@ -728,7 +731,7 @@ chemistry, and life would look like.</div>
       const ctx = canvas.getContext("2d");
       const styles = getComputedStyle(document.documentElement);
       const values = metricItems(metrics).map(item => item.value / 100);
-      const labels = ["Atomic", "Planet", "Chemistry", "Life", "Civilization"];
+      const labels = ["Atomic", "Planet", "Chemistry", "Life", "Civiliz."];
       const center = 140;
       const radius = 88;
       let start = null;
