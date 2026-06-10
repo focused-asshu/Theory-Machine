@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theory Machine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:       #0C0C0A;
+      --bg-surface:    #141412;
+      --bg-card:       #1C1C19;
+      --bg-input:      #111110;
+      --border:        #282824;
+      --border-light:  #333330;
+      --text-primary:  #E8E4D8;
+      --text-secondary:#8A8578;
+      --text-muted:    #524F48;
+      --accent:        #C4853A;
+      --accent-dim:    #8A5A25;
+      --accent-bg:     #1A1005;
+      --positive:      #4D8B6F;
+      --negative:      #B85C4A;
+      --neutral:       #7A7A6E;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--bg-base); color: var(--text-primary); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    button, select, input { font: inherit; }
+
+    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .app-header {
+      padding: 24px 32px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-base);
+    }
+
+    .app-title {
+      margin: 0 0 4px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .subtitle { margin: 0 0 8px; color: var(--text-muted); font-size: 11px; }
+    .tagline { margin: 0; color: var(--text-secondary); font-size: 12px; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px minmax(0, 1fr);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .parameters-panel {
+      position: relative;
+      padding: 24px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-surface);
+    }
+
+    .results-panel { padding: 24px; background: var(--bg-base); }
+
+    .section-label {
+      margin: 0 0 20px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .preset-select {
+      width: 100%;
+      margin-bottom: 24px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 150ms ease;
+    }
+
+    .preset-select:hover, .preset-select:focus { border-color: var(--border-light); }
+
+    .parameter { margin-bottom: 24px; }
+
+    .parameter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .parameter-name {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .real-marker {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--positive);
+    }
+
+    .real-marker.is-visible { display: inline-flex; }
+    .real-marker::before { content: ""; width: 5px; height: 5px; border-radius: 100px; background: var(--positive); }
+
+    input[type="range"] {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+      --fill: 50%;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 2px;
+      border-radius: 100px;
+      background: linear-gradient(to right, var(--accent-dim) 0 var(--fill), var(--border) var(--fill) 100%);
+      transition: background 150ms ease;
+    }
+
+    input[type="range"]::-moz-range-track { height: 2px; border-radius: 100px; background: var(--border); }
+    input[type="range"]::-moz-range-progress { height: 2px; border-radius: 100px; background: var(--accent-dim); }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -6px;
+      border: 0;
+      border-radius: 100px;
+      background: var(--accent);
+      transition: width 150ms ease, height 150ms ease, margin 150ms ease, background 150ms ease;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border: 0;
+      border-radius: 100px;
+      background: var(--accent);
+      transition: width 150ms ease, height 150ms ease, background 150ms ease;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -7px; background: #D19448; }
+    input[type="range"]:hover::-moz-range-thumb { width: 16px; height: 16px; background: #D19448; }
+
+    .slider-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+    .multiplier { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); }
+    .reference { font-size: 12px; color: var(--text-muted); text-align: right; }
+
+    .dimension-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .dimension-button {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+    }
+    .dimension-button:hover { border-color: var(--border-light); }
+    .dimension-button.is-selected { background: var(--accent); color: var(--bg-base); border-color: var(--accent); }
+
+    .simulate-button {
+      position: relative;
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--accent-dim);
+      border-radius: 4px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: background 150ms ease, color 150ms ease;
+    }
+    .simulate-button:hover { background: var(--accent-dim); color: var(--bg-base); }
+    .simulate-button:disabled { pointer-events: none; opacity: 0.85; }
+    .cursor { display: none; animation: blink 800ms steps(2, start) infinite; }
+    .is-loading .cursor { display: inline; }
+
+    .loading-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+    .loading-bar::before { content: ""; position: absolute; width: 35%; height: 1px; background: var(--accent); animation: indeterminate 900ms ease-in-out infinite; }
+    .parameters-panel.is-loading .loading-bar { opacity: 1; }
+
+    .results-stack { display: flex; flex-direction: column; gap: 20px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card);
+      padding: 20px;
+      transition: border-color 150ms ease;
+    }
+    .card:hover { border-color: var(--border-light); }
+    .card.is-animated { opacity: 0; transform: translateY(8px); animation: cardIn 420ms ease forwards; }
+    .results-panel.is-loading .card { animation: borderPulse 1s ease-in-out infinite; }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .card-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .icon { color: var(--accent-dim); font-size: 18px; line-height: 1; }
+    .card-title { font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .rule { height: 1px; background: var(--border); margin-bottom: 14px; }
+    .card-content { color: var(--text-secondary); font-size: 14px; }
+    .card-content p { margin: 0 0 12px; }
+    .card-content p:last-child { margin-bottom: 0; }
+
+    .severity, .badge {
+      flex: 0 0 auto;
+      border-radius: 100px;
+      padding: 4px 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .severity.normal, .severity.possible { background: rgb(77 139 111 / 15%); color: var(--positive); }
+    .severity.altered, .severity.unlikely { background: rgb(196 133 58 / 15%); color: var(--accent); }
+    .severity.extreme { background: rgb(184 92 74 / 20%); color: var(--negative); }
+    .severity.impossible { background: rgb(184 92 74 / 25%); color: var(--negative); }
+
+    .empty-panel { min-height: 560px; display: grid; place-items: center; }
+    .empty-message { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 15px; color: var(--text-muted); white-space: pre-line; }
+    .empty-symbol { display: block; margin-bottom: 20px; font-size: 40px; color: var(--border-light); }
+    .empty-card-area { display: grid; place-items: center; min-height: 132px; border: 1px dashed var(--border); color: var(--text-muted); font-size: 13px; text-align: center; }
+
+    .verdict-name { margin: 16px 0; padding-left: 12px; border-left: 3px solid var(--accent); font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 600; color: var(--text-primary); }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .badge.positive { background: rgb(77 139 111 / 15%); color: var(--positive); }
+    .badge.negative { background: rgb(184 92 74 / 20%); color: var(--negative); }
+    .badge.neutral { background: rgb(196 133 58 / 15%); color: var(--accent); }
+
+    .survivability-label { margin: 20px 0 8px; font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; color: var(--text-muted); }
+    .survivability-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+    .survivability-track { height: 8px; background: var(--border); overflow: hidden; }
+    .survivability-fill { height: 100%; width: 0; background: var(--accent); animation: growBar 800ms cubic-bezier(.22, 1, .36, 1) forwards; }
+    .survivability-value { font-family: "JetBrains Mono", monospace; color: var(--accent); font-size: 13px; }
+
+    .metrics-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: center; }
+    .radar-wrap { display: grid; place-items: center; }
+    canvas { width: 280px; height: 280px; max-width: 100%; }
+    .metric-list { display: flex; flex-direction: column; gap: 12px; }
+    .metric-top { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; margin-bottom: 6px; }
+    .metric-label { font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .metric-value { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); }
+    .metric-delta { font-family: "JetBrains Mono", monospace; font-size: 10px; }
+    .metric-delta.negative { color: var(--negative); }
+    .metric-delta.positive { color: var(--positive); }
+    .metric-track { height: 4px; background: var(--border); }
+    .metric-fill { height: 100%; width: 0; background: var(--accent-dim); animation: growBar 700ms cubic-bezier(.22, 1, .36, 1) forwards; }
+
+    .timeline-list { display: flex; flex-direction: column; }
+    .timeline-item { display: grid; grid-template-columns: 20px 160px 1fr; gap: 12px; opacity: 0; animation: timelineIn 280ms ease forwards; }
+    .timeline-marker { position: relative; display: flex; justify-content: center; }
+    .timeline-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 100px; background: var(--accent); }
+    .timeline-marker::after { content: ""; position: absolute; top: 18px; bottom: 0; width: 1px; background: var(--border); }
+    .timeline-item:last-child .timeline-marker::after { display: none; }
+    .timeline-time { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); text-align: right; }
+    .timeline-event { padding-bottom: 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; }
+    .timeline-item:last-child .timeline-event { border-bottom: 0; padding-bottom: 0; }
+
+    .error-card { border-color: rgb(184 92 74 / 30%); background: rgb(184 92 74 / 10%); }
+
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes indeterminate { 0% { transform: translateX(-110%); } 100% { transform: translateX(320%); } }
+    @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+    @keyframes growBar { to { width: var(--target); } }
+    @keyframes timelineIn { to { opacity: 1; } }
+    @keyframes borderPulse { 50% { border-color: var(--border-light); } }
+
+    @media (max-width: 899px) {
+      .app-header { padding: 20px; }
+      .main-grid { grid-template-columns: 1fr; }
+      .parameters-panel { border-right: 0; border-bottom: 1px solid var(--border); }
+      .results-panel { padding: 20px; }
+      .cards-grid, .metrics-layout { grid-template-columns: 1fr; }
+      .timeline-item { grid-template-columns: 20px 96px 1fr; }
+      .timeline-time { width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <h1 class="app-title">Theory Machine</h1>
+      <p class="subtitle">by Hack Club · Stardance 2025</p>
+      <p class="tagline">Explore alternate universes by modifying the laws of physics.</p>
+    </header>
+
+    <main class="main-grid">
+      <aside class="parameters-panel" id="parametersPanel">
+        <p class="section-label">Universe Parameters</p>
+        <select class="preset-select" id="presetSelect" aria-label="Preset universe"></select>
+        <div id="parameterControls"></div>
+        <div class="parameter">
+          <div class="parameter-header">
+            <span class="parameter-name">Spatial Dimensions</span>
+            <span class="real-marker is-visible" id="dimsReal">real universe</span>
+          </div>
+          <div class="dimension-group" id="dimensionGroup" aria-label="Spatial dimensions"></div>
+        </div>
+        <button class="simulate-button" id="simulateButton">SIMULATE UNIVERSE →<span class="cursor">|</span></button>
+        <div class="loading-bar" aria-hidden="true"></div>
+      </aside>
+
+      <section class="results-panel" id="resultsPanel">
+        <p class="section-label">Consequences</p>
+        <div id="resultsRoot" class="empty-panel">
+          <div class="empty-message"><span class="empty-symbol">⬡</span>Configure the universe parameters
+on the left and press Simulate.
+
+The engine will derive what physics,
+chemistry, and life would look like.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const PRESETS = [
+      { name: "Our Universe", values: { c:1.0, G:1.0, hbar:1.0, e:1.0, snf:1.0, dims:3 } },
+      { name: "Weak Gravity", values: { c:1.0, G:0.1, hbar:1.0, e:1.0, snf:1.0, dims:3 } },
+      { name: "Slow Light", values: { c:0.1, G:1.0, hbar:1.0, e:1.0, snf:1.0, dims:3 } },
+      { name: "Giant Quantum World", values: { c:1.0, G:1.0, hbar:50.0, e:1.0, snf:1.0, dims:3 } },
+      { name: "Strong Nuclear Collapse", values: { c:1.0, G:1.0, hbar:1.0, e:1.0, snf:5.0, dims:3 } },
+      { name: "Four Dimensions", values: { c:1.0, G:1.0, hbar:1.0, e:1.0, snf:1.0, dims:4 } },
+      { name: "Neutron Hell", values: { c:1.0, G:10.0, hbar:1.0, e:1.0, snf:2.0, dims:3 } },
+      { name: "Ghost Universe", values: { c:1.0, G:0.01, hbar:1.0, e:0.1, snf:0.5, dims:3 } },
+      { name: "Custom", values: null }
+    ];
+
+    const PARAMS = [
+      { key: "c", name: "Speed of Light", min: 0.01, max: 10, step: 0.01, display: v => `c = ${(v * 2.998).toFixed(3)} × 10⁸ m/s` },
+      { key: "G", name: "Gravitational Constant", min: 0.01, max: 100, step: 0.1, display: v => `G × ${formatMultiplier(v)}` },
+      { key: "hbar", name: "Planck's Constant", min: 0.01, max: 100, step: 0.1, display: v => `ħ × ${formatMultiplier(v)}` },
+      { key: "e", name: "Electron Charge", min: 0.1, max: 5, step: 0.05, display: v => `e × ${formatMultiplier(v)}` },
+      { key: "snf", name: "Strong Nuclear Force", min: 0.1, max: 10, step: 0.05, display: v => `αs × ${formatMultiplier(v)}` }
+    ];
+
+    const state = { c: 1, G: 1, hbar: 1, e: 1, snf: 1, dims: 3 };
+    const controls = new Map();
+    const $ = selector => document.querySelector(selector);
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const roundScore = value => Math.round(clamp(value, 0, 100));
+
+    function formatMultiplier(value) {
+      return Number(value).toFixed(value >= 10 ? 1 : 2).replace(/\.00$/, ".0");
+    }
+
+    function init() {
+      const presetSelect = $("#presetSelect");
+      PRESETS.forEach((preset, index) => presetSelect.add(new Option(preset.name, index)));
+      presetSelect.addEventListener("change", () => {
+        const preset = PRESETS[Number(presetSelect.value)];
+        if (preset.values) applyValues(preset.values, false);
+      });
+      renderParameterControls();
+      renderDimensionControls();
+      updateControls();
+      $("#simulateButton").addEventListener("click", runSimulation);
+      window.addEventListener("resize", () => window.latestResult && drawRadar(window.latestResult.metrics, 1));
+    }
+
+    function renderParameterControls() {
+      const root = $("#parameterControls");
+      PARAMS.forEach(config => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "parameter";
+        wrapper.innerHTML = `
+          <div class="parameter-header">
+            <label class="parameter-name" for="${config.key}">${config.name}</label>
+            <span class="real-marker" data-real="${config.key}">real universe</span>
+          </div>
+          <input id="${config.key}" type="range" min="${config.min}" max="${config.max}" step="${config.step}" value="1" aria-label="${config.name}">
+          <div class="slider-meta">
+            <span class="multiplier" data-multiplier="${config.key}">×1.0</span>
+            <span class="reference" data-reference="${config.key}"></span>
+          </div>`;
+        root.appendChild(wrapper);
+        const input = wrapper.querySelector("input");
+        input.addEventListener("input", () => {
+          state[config.key] = Number(input.value);
+          $("#presetSelect").value = String(PRESETS.length - 1);
+          updateControls();
+        });
+        controls.set(config.key, { input, config });
+      });
+    }
+
+    function renderDimensionControls() {
+      const group = $("#dimensionGroup");
+      [2, 3, 4, 5].forEach(dim => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "dimension-button";
+        button.textContent = `${dim}D`;
+        button.addEventListener("click", () => {
+          state.dims = dim;
+          $("#presetSelect").value = String(PRESETS.length - 1);
+          updateControls();
+        });
+        group.appendChild(button);
+      });
+    }
+
+    function applyValues(values, markCustom = true) {
+      Object.assign(state, values);
+      if (markCustom) $("#presetSelect").value = String(PRESETS.length - 1);
+      updateControls();
+    }
+
+    function updateControls() {
+      PARAMS.forEach(config => {
+        const { input } = controls.get(config.key);
+        input.value = state[config.key];
+        const percent = ((state[config.key] - config.min) / (config.max - config.min)) * 100;
+        input.style.setProperty("--fill", `${percent}%`);
+        document.querySelector(`[data-multiplier="${config.key}"]`).textContent = `×${formatMultiplier(state[config.key])}`;
+        document.querySelector(`[data-reference="${config.key}"]`).textContent = config.display(state[config.key]);
+        document.querySelector(`[data-real="${config.key}"]`).classList.toggle("is-visible", Math.abs(state[config.key] - 1) < 0.0001);
+      });
+      [...document.querySelectorAll(".dimension-button")].forEach(button => button.classList.toggle("is-selected", button.textContent === `${state.dims}D`));
+      $("#dimsReal").classList.toggle("is-visible", state.dims === 3);
+    }
+
+    function simulateUniverse(params) {
+      const { c, G, hbar, e, snf, dims } = params;
+      if ([c, G, hbar, e, snf].some(v => !Number.isFinite(v) || v <= 0) || ![2,3,4,5].includes(dims)) throw new Error("One or more universe parameters fell outside the calibrated simulation range.");
+
+      const metrics = calculateMetrics(params);
+      const stellarLifetime = 10 / (G * G);
+      const survivability = roundScore((metrics.life_potential * 0.45) + (metrics.civilization_potential * 0.25) + (metrics.atomic_stability * 0.15) + (metrics.planet_stability * 0.15));
+      const universe_name = generateName(params);
+      const badges = generateBadges(params, metrics, stellarLifetime);
+
+      return {
+        universe_name,
+        atomic_structure: buildAtomic(params, metrics),
+        stellar_physics: buildStellar(params, metrics, stellarLifetime),
+        chemistry: buildChemistry(params, metrics),
+        life_possibility: buildLife(params, metrics, survivability),
+        verdict: { universe_name, description: buildVerdict(params, metrics, survivability, stellarLifetime), survivability, badges },
+        metrics,
+        timeline: buildTimeline(params, metrics, stellarLifetime)
+      };
+    }
+
+    function calculateMetrics({ c, G, hbar, e, snf, dims }) {
+      let atomic_stability = clamp(100 - Math.abs(Math.log10(c)) * 40 - Math.abs(Math.log10(hbar)) * 30 - Math.abs(Math.log10(e)) * 35 + (dims === 3 ? 0 : -60), 0, 100);
+      let planet_stability = clamp(100 - Math.abs(Math.log10(G)) * 25 + (dims === 4 ? -80 : dims !== 3 ? -90 : 0), 0, 100);
+      let chemistry_complexity = clamp(100 - Math.abs(Math.log10(c)) * 30 - Math.abs(Math.log10(hbar)) * 20 - Math.abs(Math.log10(e)) * 40 - Math.abs(Math.log10(snf)) * 20, 0, 100);
+      if (c < 0.1 || c > 5 || e > 2 || e < 0.3 || hbar > 10 || hbar < 0.1 || dims !== 3) atomic_stability -= 35;
+      if (G > 20 || G < 0.1 || dims !== 3) planet_stability -= 40;
+      if (snf < 0.5 || snf > 2 || e > 2 || e < 0.3 || c < 0.1 || c > 5 || hbar > 10) chemistry_complexity -= 45;
+      atomic_stability = roundScore(atomic_stability);
+      planet_stability = roundScore(planet_stability);
+      chemistry_complexity = roundScore(chemistry_complexity);
+      const life_potential = roundScore(atomic_stability * 0.25 + planet_stability * 0.25 + chemistry_complexity * 0.35 + (dims === 3 ? 15 : 0));
+      const civilization_potential = roundScore(life_potential * 0.8 - (G > 5 ? 30 : 0) - (hbar > 10 ? 20 : 0));
+      return { atomic_stability, planet_stability, chemistry_complexity, life_potential, civilization_potential };
+    }
+
+    function severity(score, possible = false) {
+      if (possible) return score > 60 ? "possible" : score > 35 ? "unlikely" : "impossible";
+      if (score > 75) return "normal";
+      if (score > 45) return "altered";
+      if (score > 15) return "extreme";
+      return "impossible";
+    }
+
+    function buildAtomic({ c, hbar, e, dims }, metrics) {
+      const alpha = 1 / 137 / c;
+      const bohr = 0.529 * hbar * hbar / e / e * c;
+      const p = [];
+      if (dims !== 3) p.push(dims === 2 ? `In ${dims} spatial dimensions, electron orbitals cannot reproduce ordinary three-dimensional shells. Coulomb attraction and confinement geometry change enough that the familiar periodic table loses its quantum scaffolding before chemistry begins.` : `In ${dims} spatial dimensions, the force law no longer supports stable atomic orbits. Electrons radiate or drift away instead of occupying durable shells, so matter has no ordinary microscopic architecture.`);
+      if (c < 0.1) p.push(`With light moving at only ${(c * 2.998).toFixed(3)} × 10⁸ m/s, the fine-structure constant α swells to roughly ${alpha.toFixed(3)} — about ${(1 / c).toFixed(0)}× its normal value. Even hydrogen-like electrons become relativistic in ground states, and orbital contraction pushes atomic structure toward collapse.`);
+      else if (c < 0.3) p.push(`Light travels at ${(c * 2.998).toFixed(2)} × 10⁸ m/s, raising α to ${alpha.toFixed(4)}. Inner electrons in heavier atoms approach relativistic speeds, shortening the stable periodic table and making high-Z atoms structurally suspect.`);
+      else if (c > 5) p.push(`At ${(c * 2.998).toFixed(1)} × 10⁸ m/s, α falls to ${alpha.toExponential(2)}. Electromagnetic binding is so diluted that electron clouds barely attach to nuclei; stable atoms are effectively absent.`);
+      else if (c > 3) p.push(`A speed of light multiplier of ×${formatMultiplier(c)} weakens electromagnetic binding. Atoms can exist, but their ionization energies are small and thermal disruption becomes common.`);
+      else p.push(`At ×${formatMultiplier(c)} light speed, α remains close enough to ${alpha.toFixed(4)} for recognizable orbitals. Relativistic corrections are present but not the dominant failure mode.`);
+
+      if (hbar > 50) p.push(`Planck's constant is ×${formatMultiplier(hbar)}, so the Bohr radius scales by ħ² to roughly ${bohr.toExponential(2)} Å. Quantum wave behavior becomes macroscopic; laboratory-sized matter would display persistent superposition before it resembles a solid.`);
+      else if (hbar > 10) p.push(`With ħ at ×${formatMultiplier(hbar)}, atoms inflate by about ${(hbar * hbar).toFixed(0)}× before charge corrections. Bond lengths reach mesoscopic scales, making dense solid matter mechanically incoherent.`);
+      else if (hbar < 0.1) p.push(`With ħ at ×${formatMultiplier(hbar)}, orbitals shrink by roughly ${(hbar * hbar).toExponential(1)}. Electron clouds are compressed toward nuclear dimensions, producing hyper-dense matter where chemistry and nuclear physics overlap.`);
+      else p.push(`The effective Bohr radius is approximately ${bohr.toFixed(3)} Å after combining c, ħ, and e. That length scale sets how compact every atom and molecule in this universe can be.`);
+
+      if (e > 2) p.push(`Electron charge is ×${formatMultiplier(e)}, binding energies rise sharply, and electrons are driven into nuclei rather than shared between atoms. Atomic individuality is short-lived.`);
+      else if (e < 0.3) p.push(`Electron charge is only ×${formatMultiplier(e)}, so nuclei cannot hold their electrons against ordinary thermal motion. Matter becomes an ionized, weakly coupled plasma.`);
+      return { title: "Atomic Structure", content: p.slice(0, 3).join("\n\n"), severity: severity(metrics.atomic_stability) };
+    }
+
+    function buildStellar({ G, snf, dims }, metrics, lifetime) {
+      const p = [];
+      if (dims !== 3) p.push(dims === 4 ? `Four-dimensional gravity follows an inverse-cube law, so closed Keplerian orbits disappear. Planets either plunge inward or escape, and stars cannot host long-lived orbital systems.` : `${dims}D spacetime prevents ordinary gravitational wells from behaving like ours. Large structures may clump briefly, but stable planetary systems are not a durable outcome.`);
+      if (G > 20) p.push(`Gravity is ×${formatMultiplier(G)}, reducing a Sun-like stellar lifetime to roughly ${(lifetime * 1000).toFixed(1)} million years and pushing massive clouds directly toward black-hole collapse. Illumination is violent and brief.`);
+      else if (G > 5) p.push(`With G at ×${formatMultiplier(G)}, stars ignite easily but burn approximately ${(G * G).toFixed(0)}× faster than ours. Main-sequence lifetimes are measured in millions to hundreds of millions of years, not billions.`);
+      else if (G < 0.1) p.push(`G is only ×${formatMultiplier(G)}, below the threshold where gas clouds readily collapse. Most baryons disperse into dark, cold reservoirs, and star formation becomes a rare statistical accident.`);
+      else p.push(`G at ×${formatMultiplier(G)} gives characteristic stellar lifetimes near ${lifetime.toFixed(2)} billion years for Sun-like masses. Planetary surface gravity and atmospheric retention remain within a calculable range.`);
+      if (snf > 2) p.push(`The strong force at ×${formatMultiplier(snf)} overproduces helium during primordial nucleosynthesis. Hydrogen fuel and water chemistry are depleted before planets can inherit them.`);
+      else if (snf < 0.5) p.push(`The strong force at ×${formatMultiplier(snf)} cannot bind multi-proton nuclei. Stars lack normal fusion chains and the universe stalls as hydrogen plasma rather than building heavy elements.`);
+      else p.push(`With αs at ×${formatMultiplier(snf)}, nucleosynthesis still leaves a usable mixture of hydrogen and heavier nuclei, though abundance ratios shift measurably from our cosmic inventory.`);
+      return { title: "Stars & Planets", content: p.slice(0, 3).join("\n\n"), severity: severity(metrics.planet_stability) };
+    }
+
+    function buildChemistry({ c, hbar, e, snf, dims }, metrics) {
+      const bondScale = e * e / (hbar * hbar) / c;
+      const p = [];
+      if (dims !== 3) p.push(`Chemistry is dimension-sensitive: in ${dims}D, molecular shapes and orbital degeneracies are rewritten. The steric logic behind proteins, crystals, solvents, and membranes does not transfer cleanly.`);
+      if (e > 2) p.push(`At electron charge ×${formatMultiplier(e)}, electromagnetic binding is too strong. Electrons localize into nuclei and bonds cannot exchange valence electrons, so reactions freeze into nuclear capture rather than chemistry.`);
+      else if (e < 0.3) p.push(`At electron charge ×${formatMultiplier(e)}, ionization energy collapses. Electrons escape atoms too easily, preventing neutral molecules and leaving a conductive plasma with little molecular memory.`);
+      else p.push(`The combined chemical bond scale is about ×${bondScale.toFixed(2)} relative to ours after c, ħ, and e are folded together. Reaction temperatures, bond lengths, and solvent behavior all track that shift.`);
+      if (snf > 5) p.push(`With αs at ×${formatMultiplier(snf)}, exotic heavy nuclei dominate and light elements become unstable. Carbon-like chemistry is replaced by neutron-rich nuclear ash.`);
+      else if (snf > 2) p.push(`αs at ×${formatMultiplier(snf)} burns primordial hydrogen into helium, removing the most versatile proton donor and making water chemistry nearly impossible.`);
+      else if (snf < 0.5) p.push(`αs at ×${formatMultiplier(snf)} leaves protons unable to assemble complex nuclei. Without carbon, oxygen, nitrogen, or metals, chemistry cannot progress beyond ionized hydrogen.`);
+      if (c < 0.3 || c > 3 || hbar > 10 || hbar < 0.1) p.push(`The orbital scale is additionally distorted by c ×${formatMultiplier(c)} and ħ ×${formatMultiplier(hbar)}. Even where atoms exist, the periodic table would be truncated, inflated, or compressed beyond biological usefulness.`);
+      return { title: "Chemistry", content: p.slice(0, 3).join("\n\n"), severity: severity(metrics.chemistry_complexity) };
+    }
+
+    function buildLife({ G, hbar, dims }, metrics, survivability) {
+      const p = [];
+      if (metrics.life_potential > 70) p.push(`Life potential scores ${metrics.life_potential}/100. The constants remain close enough to the terrestrial balance that liquid solvents, long-lived stars, and diverse chemistry can coexist for evolutionary timescales.`);
+      else if (metrics.life_potential > 40) p.push(`Life potential scores ${metrics.life_potential}/100. The universe is not comfortable, but niches may exist where chemistry persists long enough for self-organizing systems under narrow temperature and pressure windows.`);
+      else p.push(`Life potential scores only ${metrics.life_potential}/100. The limiting factors compound: insufficient atomic stability, unreliable planets, and reduced chemical complexity leave little room for heredity or metabolism.`);
+      if (G > 5) p.push(`Because G is ×${formatMultiplier(G)}, stellar clocks run too fast for slow adaptation. Biospheres would need to emerge in less than ${(10 / (G * G)).toFixed(2)} billion years, often far less for bright stars.`);
+      else if (G < 0.1) p.push(`Because G is ×${formatMultiplier(G)}, the main problem is not extinction but absence: few stars and planets condense, so habitable laboratories are sparse.`);
+      else p.push(`With G at ×${formatMultiplier(G)}, planetary environments can remain stable enough for long chemical histories if the other constants permit complex molecules.`);
+      if (hbar > 10) p.push(`Macroscopic quantum behavior from ħ ×${formatMultiplier(hbar)} undermines rigid cellular machinery. Membranes, catalysts, and information-bearing polymers lose the locality that biology normally exploits.`);
+      if (dims !== 3) p.push(`${dims}D topology makes enclosure, circulation, and stable orbits problematic; any life would be radically unlike cells in water and may not be chemically embodied at all.`);
+      p.push(`Overall survivability is ${survivability}%, placing this universe in the ${survivability > 90 ? "near-identical" : survivability > 70 ? "hospitable but altered" : survivability > 50 ? "extreme niche" : survivability > 30 ? "interesting but sterile" : "structurally hostile"} band.`);
+      return { title: "Life Possibility", content: p.slice(0, 3).join("\n\n"), severity: severity(metrics.life_potential, true) };
+    }
+
+    function generateName({ c, G, hbar, e, snf, dims }) {
+      if (dims === 3 && [c, G, hbar, e, snf].every(value => Math.abs(value - 1) < 0.0001)) return "The Familiar Lattice";
+      if (dims === 2) return "The Flatland Echo";
+      if (dims === 4) return "The Unbound Orbit";
+      if (dims >= 5) return "The Dimensional Collapse";
+      const values = [{k:"c",v:c},{k:"G",v:G},{k:"hbar",v:hbar},{k:"e",v:e},{k:"snf",v:snf}];
+      const low = values.reduce((a,b) => a.v < b.v ? a : b);
+      const high = values.reduce((a,b) => a.v > b.v ? a : b);
+      const dominant = Math.abs(Math.log10(low.v)) >= Math.abs(Math.log10(high.v)) ? low : high;
+      const descriptors = { c: dominant.v < 1 ? "Slow Light" : "Thin Light", G: dominant.v < 1 ? "Gravity-Starved" : "Neutron", hbar: dominant.v < 1 ? "Compressed Quantum" : "Quantum", e: dominant.v < 1 ? "Ghost Charge" : "Iron Charge", snf: dominant.v < 1 ? "Hydrogen" : "Nuclear" };
+      const nouns = ["Labyrinth", "Collapse", "Silence", "Echo", "Forge", "Void", "Lattice", "Cascade"];
+      const index = Math.abs(Math.round(Math.log10(dominant.v || 1) * 10)) % nouns.length;
+      return `The ${descriptors[dominant.k]} ${nouns[index]}`;
+    }
+
+    function generateBadges({ c, G, hbar, snf, dims }, metrics, lifetime) {
+      const badges = [];
+      if (metrics.life_potential > 60) badges.push("Life-Friendly");
+      if (metrics.life_potential < 20) badges.push("Sterile");
+      if (G > 5) badges.push("Gravity-Dominated");
+      if (G < 0.2) badges.push("Gravity-Starved");
+      if (hbar > 10) badges.push("Quantum-Dominated");
+      if (c < 0.3) badges.push("Relativistic Chaos");
+      if (snf > 2) badges.push("Neutron-Rich");
+      if (snf < 0.5) badges.push("Hydrogen-Only");
+      if (dims === 4) badges.push("Unstable Orbits");
+      if (dims === 2) badges.push("Flatland Physics");
+      if (dims >= 5) badges.push("Dimensional Collapse");
+      if (metrics.chemistry_complexity > 70) badges.push("Chemically Rich");
+      if (lifetime < 1) badges.push("Short-Lived Stars"); else if (lifetime > 20 && G >= 0.1) badges.push("Long-Lived Stars");
+      if (metrics.civilization_potential > 60) badges.push("Civilization-Possible");
+      if (!badges.length) badges.push("Exotic Physics", "Marginal Structure", "Altered Constants");
+      return badges.slice(0, 6);
+    }
+
+    function buildVerdict(params, metrics, survivability, lifetime) {
+      const bands = survivability <= 10 ? "No durable matter survives the opening conditions." : survivability <= 30 ? "Structure appears, but chemistry cannot carry complexity." : survivability <= 50 ? "The physics is rich, yet biological pathways are mostly closed." : survivability <= 70 ? "Some exotic life may be possible in protected niches." : survivability <= 90 ? "This is a hospitable universe with altered biology." : "This universe remains close to our own cosmic operating point.";
+      return `${bands} The strongest constraints are atomic stability ${metrics.atomic_stability}/100, planet stability ${metrics.planet_stability}/100, and chemistry complexity ${metrics.chemistry_complexity}/100. A Sun-like star would last about ${lifetime.toFixed(2)} billion years, while ${params.dims}D geometry ${params.dims === 3 ? "preserves" : "damages"} the orbital architecture needed for long histories.`;
+    }
+
+    function buildTimeline({ G, snf, hbar }, metrics, lifetime) {
+      const firstStars = G > 5 ? "50,000 years" : G < 0.1 ? "Never" : "200 million years";
+      const timeline = [
+        { time: "0 seconds", event: "Big Bang — spacetime expands under the selected constants" },
+        { time: snf < 0.5 ? "Never" : "3 minutes", event: snf < 0.5 ? "Nucleosynthesis fails — only hydrogen plasma remains" : snf > 2 ? "Primordial nucleosynthesis overproduces helium and neutron-rich nuclei" : "Primordial nucleosynthesis creates light nuclei" },
+        { time: hbar > 10 ? "10,000 years" : "380,000 years", event: hbar > 10 ? "Macroscopic quantum decoherence competes with atom formation" : "Atoms decouple from radiation and transparent space begins" },
+        { time: firstStars, event: G < 0.1 ? "Gas clouds disperse before normal stars can ignite" : "First stars ignite" },
+        { time: G > 20 ? "1 million years" : G > 5 ? "20 million years" : `${Math.max(1, lifetime).toFixed(1)} billion years`, event: G > 5 ? "First stellar generation burns out rapidly" : "Stable main-sequence stars maintain planetary climates" }
+      ];
+      if (metrics.chemistry_complexity > 45) timeline.push({ time: G > 5 ? "30 million years" : "500 million years", event: "Heavy elements seed planets and complex molecules" });
+      if (metrics.life_potential > 40) timeline.push({ time: G > 5 ? "Maybe too late" : "1–4 billion years", event: "Self-organizing chemistry may cross into primitive life" });
+      if (metrics.civilization_potential > 60) timeline.push({ time: "Several billion years", event: "Long-lived environments could support technological observers" });
+      else timeline.push({ time: "End state", event: "Cosmic evolution settles before civilization-scale complexity becomes likely" });
+      return timeline.slice(0, 8);
+    }
+
+    async function runSimulation() {
+      const button = $("#simulateButton");
+      const panel = $("#parametersPanel");
+      const resultsPanel = $("#resultsPanel");
+      try {
+        button.disabled = true;
+        button.classList.add("is-loading");
+        button.firstChild.nodeValue = "SIMULATING...";
+        panel.classList.add("is-loading");
+        resultsPanel.classList.add("is-loading");
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        const result = simulateUniverse({ ...state });
+        window.latestResult = result;
+        renderResults(result);
+      } catch (error) {
+        renderError(error);
+      } finally {
+        button.disabled = false;
+        button.classList.remove("is-loading");
+        button.firstChild.nodeValue = "SIMULATE UNIVERSE →";
+        panel.classList.remove("is-loading");
+        resultsPanel.classList.remove("is-loading");
+      }
+    }
+
+    function renderResults(result) {
+      const cards = [
+        ["⚛", result.atomic_structure],
+        ["✦", result.stellar_physics],
+        ["⬡", result.chemistry],
+        ["◈", result.life_possibility]
+      ];
+      $("#resultsRoot").className = "results-stack";
+      $("#resultsRoot").innerHTML = `
+        <div class="cards-grid">${cards.map(([icon, card], index) => renderCard(icon, card, index)).join("")}</div>
+        ${renderVerdict(result.verdict)}
+        ${renderMetrics(result.metrics)}
+        ${renderTimeline(result.timeline)}
+      `;
+      requestAnimationFrame(() => drawRadar(result.metrics, 0));
+    }
+
+    function renderCard(icon, card, index) {
+      return `<article class="card is-animated" style="animation-delay:${index * 120}ms">
+        <div class="card-header"><div class="card-heading"><span class="icon">${icon}</span><span class="card-title">${card.title}</span></div><span class="severity ${card.severity}">${labelForSeverity(card.severity)}</span></div>
+        <div class="rule"></div><div class="card-content">${paragraphs(card.content)}</div>
+      </article>`;
+    }
+
+    function renderVerdict(verdict) {
+      const color = verdict.survivability <= 20 ? "var(--negative)" : verdict.survivability <= 60 ? "var(--accent)" : "var(--positive)";
+      return `<article class="card is-animated" style="animation-delay:480ms"><p class="section-label">Universe Verdict</p><div class="verdict-name">&quot;${verdict.universe_name}&quot;</div><div class="badges">${verdict.badges.map(b => `<span class="badge ${badgeClass(b)}">${b}</span>`).join("")}</div><div class="card-content"><p>${verdict.description}</p></div><div class="survivability-label">Survivability</div><div class="survivability-row"><div class="survivability-track"><div class="survivability-fill" style="--target:${verdict.survivability}%; background:${color}"></div></div><span class="survivability-value">${verdict.survivability}%</span></div></article>`;
+    }
+
+    function renderMetrics(metrics) {
+      const items = metricItems(metrics);
+      return `<article class="card is-animated" style="animation-delay:600ms"><p class="section-label">Universe Metrics</p><div class="metrics-layout"><div class="radar-wrap"><canvas id="radarCanvas" width="280" height="280" aria-label="Universe metrics radar chart"></canvas></div><div class="metric-list">${items.map(item => { const delta = item.value - 100; return `<div class="metric"><div class="metric-top"><span class="metric-label">${item.label}</span><span class="metric-value">${item.value}</span>${delta === 0 ? "" : `<span class="metric-delta ${delta > 0 ? "positive" : "negative"}">${delta > 0 ? "+" : "−"}${Math.abs(delta)}</span>`}</div><div class="metric-track"><div class="metric-fill" style="--target:${item.value}%"></div></div></div>`; }).join("")}</div></div></article>`;
+    }
+
+    function renderTimeline(timeline) {
+      return `<article class="card is-animated" style="animation-delay:720ms"><p class="section-label">Cosmic Timeline</p><div class="timeline-list">${timeline.map((item, index) => `<div class="timeline-item" style="animation-delay:${980 + index * 80}ms"><div class="timeline-marker"><span class="timeline-dot"></span></div><div class="timeline-time">${item.time}</div><div class="timeline-event">${item.event}</div></div>`).join("")}</div></article>`;
+    }
+
+    function renderError(error) {
+      $("#resultsRoot").className = "results-stack";
+      $("#resultsRoot").innerHTML = `<article class="card error-card"><div class="card-header"><div class="card-heading"><span class="icon">⚠</span><span class="card-title">Simulation Error</span></div></div><div class="rule"></div><div class="card-content"><p>${error.message || "An unknown error interrupted the simulation."}</p></div></article>`;
+    }
+
+    function labelForSeverity(value) {
+      return ({ normal: "INTACT", altered: "ALTERED", extreme: "EXTREME", impossible: "IMPOSSIBLE", possible: "POSSIBLE", unlikely: "UNLIKELY" })[value] || "ALTERED";
+    }
+
+    function paragraphs(text) { return text.split("\n\n").map(p => `<p>${p}</p>`).join(""); }
+    function badgeClass(text) {
+      if (["Life-Friendly", "Chemically Rich", "Civilization-Possible", "Long-Lived Stars"].includes(text)) return "positive";
+      if (["Sterile", "Unstable Orbits", "Short-Lived Stars", "Neutron Hell", "Hydrogen-Only", "Dimensional Collapse"].includes(text)) return "negative";
+      return "neutral";
+    }
+    function metricItems(metrics) {
+      return [
+        { key: "atomic_stability", label: "Atomic Stability", value: metrics.atomic_stability },
+        { key: "planet_stability", label: "Planet Stability", value: metrics.planet_stability },
+        { key: "chemistry_complexity", label: "Chemistry", value: metrics.chemistry_complexity },
+        { key: "life_potential", label: "Life Potential", value: metrics.life_potential },
+        { key: "civilization_potential", label: "Civilization Potential", value: metrics.civilization_potential }
+      ];
+    }
+
+    function drawRadar(metrics, progressStart) {
+      const canvas = $("#radarCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const styles = getComputedStyle(document.documentElement);
+      const values = metricItems(metrics).map(item => item.value / 100);
+      const labels = ["Atomic", "Planet", "Chemistry", "Life", "Civilization"];
+      const center = 140;
+      const radius = 88;
+      let start = null;
+      const animate = timestamp => {
+        if (!start) start = timestamp;
+        const progress = progressStart === 1 ? 1 : clamp((timestamp - start) / 600, 0, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        ctx.clearRect(0, 0, 280, 280);
+        ctx.lineWidth = 0.5;
+        for (let ring = 1; ring <= 3; ring++) drawPolygon(ctx, Array(5).fill(ring / 3), radius, center, styles.getPropertyValue("--border"), false);
+        ctx.strokeStyle = styles.getPropertyValue("--border-light");
+        for (let i = 0; i < 5; i++) {
+          const point = radarPoint(i, 1, radius, center);
+          ctx.beginPath(); ctx.moveTo(center, center); ctx.lineTo(point.x, point.y); ctx.stroke();
+          const labelPoint = radarPoint(i, 1.22, radius, center);
+          ctx.fillStyle = styles.getPropertyValue("--text-muted");
+          ctx.font = "11px JetBrains Mono";
+          ctx.textAlign = i === 0 ? "center" : labelPoint.x < center ? "right" : "left";
+          ctx.fillText(labels[i], labelPoint.x, labelPoint.y + 4);
+        }
+        drawPolygon(ctx, values.map(v => v * eased), radius, center, styles.getPropertyValue("--accent"), true);
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }
+
+    function drawPolygon(ctx, values, radius, center, color, filled) {
+      ctx.beginPath();
+      values.forEach((value, index) => { const p = radarPoint(index, value, radius, center); index ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+      ctx.closePath();
+      if (filled) { ctx.fillStyle = "rgb(196 133 58 / 20%)"; ctx.fill(); ctx.lineWidth = 1.5; }
+      ctx.strokeStyle = color; ctx.stroke();
+      if (filled) values.forEach((value, index) => { const p = radarPoint(index, value, radius, center); ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
+    }
+
+    function radarPoint(index, value, radius, center) {
+      const angle = -Math.PI / 2 + index * (Math.PI * 2 / 5);
+      return { x: center + Math.cos(angle) * radius * value, y: center + Math.sin(angle) * radius * value };
+    }
+
+    window.addEventListener("error", event => renderError(event.error || new Error(event.message)));
+    init();
+  </script>
+</body>
+</html>
